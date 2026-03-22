@@ -137,21 +137,7 @@ input::placeholder{color:#3a6080}
 <body>
 <canvas id="cv"></canvas>
 
-<div id="boot" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;cursor:pointer;padding:20px;text-align:center">
-  <div style="font-size:clamp(1.5rem,6vw,3rem);font-weight:900;color:#00d4ff;letter-spacing:5px;text-shadow:0 0 40px #00d4ff;line-height:1.3">NAMITANGSHU'S<br>SYSTEM</div>
-  <div style="font-size:0.72rem;color:#3a6080;letter-spacing:4px">THE ARCHITECT'S LIFE INTERFACE</div>
-  <div style="width:280px;height:3px;background:rgba(0,180,255,0.15);border-radius:3px;overflow:hidden"><div id="bar" style="height:100%;width:0%;background:linear-gradient(90deg,#7b2fff,#00d4ff,#ffd700);border-radius:3px"></div></div>
-  <div style="font-size:0.68rem;color:#00d4ff;text-align:left;width:280px;line-height:2.2">
-    <div id="l1" style="opacity:0;transition:opacity 0.4s">&#9655; Awakening Hunter Profile...</div>
-    <div id="l2" style="opacity:0;transition:opacity 0.4s">&#9655; Loading SSC Battle Plans...</div>
-    <div id="l3" style="opacity:0;transition:opacity 0.4s">&#9655; Syncing Physical Stats...</div>
-    <div id="l4" style="opacity:0;transition:opacity 0.4s">&#9655; Calibrating Market Intelligence...</div>
-    <div id="l5" style="opacity:0;transition:opacity 0.4s;color:#ffd700">&#9672; ARISE, NAMITANGSHU. YOUR SYSTEM AWAITS.</div>
-  </div>
-  <div style="font-size:0.6rem;color:#3a6080;letter-spacing:3px">[ TAP ANYWHERE TO ENTER ]</div>
-</div>
-
-<div id="app" style="display:none">
+<div id="app">
   <header>
     <div>
       <div class="lt">NAMITANGSHU'S SYSTEM <span class="rb" id="hRank">F-RANK</span></div>
@@ -331,4 +317,35 @@ input::placeholder{color:#3a6080}
     <div class="mdt">SET PHYSICAL GOAL</div>
     <div class="fg">
       <div class="f fw"><label>Goal Name</label><input type="text" id="g_name" placeholder="e.g. Run 5km"/></div>
-      <div class="f"><label>Target Value</label><input type="number" id="g_target" placeho
+      <div class="f"><label>Target Value</label><input type="number" id="g_target" placeholder="5"/></div>
+      <div class="f"><label>Unit</label><input type="text" id="g_unit" placeholder="km, reps, kg"/></div>
+      <div class="f fw"><label>Deadline</label><input type="date" id="g_deadline"/></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button class="btn br2" onclick="closeMod('goalM')">CANCEL</button>
+      <button class="btn bgo" onclick="saveGoal()">SET GOAL</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="tradeM">
+  <div class="md">
+    <div class="mdt">LOG TRADE</div>
+    <div class="fg">
+      <div class="f"><label>Pair</label>
+        <input type="text" id="tr_pair" placeholder="EUR/USD" list="pL"/>
+        <datalist id="pL">
+          <option value="EUR/USD"/><option value="GBP/USD"/><option value="USD/JPY"/>
+          <option value="XAU/USD"/><option value="US30"/><option value="NAS100"/><option value="AUD/USD"/>
+        </datalist>
+      </div>
+      <div class="f"><label>Outcome</label>
+        <select id="tr_out">
+          <option value="Win">WIN</option><option value="Loss">LOSS</option><option value="Breakeven">BREAKEVEN</option>
+        </select>
+      </div>
+      <div class="f"><label>P and L</label><input type="number" id="tr_pl" placeholder="+/-" step="0.01"/></div>
+      <div class="f"><label>R:R</label><input type="text" id="tr_rr" placeholder="1:2"/></div>
+      <div class="f"><label>Session</label>
+        <select id="tr_ses">
+          <option>London</option><option>New York</opti

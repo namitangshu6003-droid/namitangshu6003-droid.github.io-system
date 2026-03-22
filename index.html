@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NAMITANGSHU'S LIFE SYSTEM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#010408;color:#c8e8ff;font-family:Arial,sans-serif;min-height:100vh}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+
+
+
+
+
+
+
+
+
+50%{opacity:1}}
+
+/* APP - hidden until boot finishes */
+#app{position:relative;z-index:2;min-height:100vh;background:#010408}
+
+header{position:sticky;top:0;z-index:100;background:#010408;border-bottom:1px solid rgba(0,180,255,0.2);padding:0 12px;height:58px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lt{font-size:clamp(0.58rem,2vw,0.85rem);font-weight:900;letter-spacing:2px;color:#00d4ff;text-shadow:0 0 12px #00d4ff}
+.ls{font-size:0.46rem;letter-spacing:3px;color:#3a6080}
+.rb{display:inline-block;background:linear-gradient(135deg,#7b2fff,#ffd700);color:#000;font-size:0.5rem;font-weight:900;padding:3px 8px;border-radius:3px;margin-left:6px;letter-spacing:2px}
+nav{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
+.nb{background:none;border:1px solid transparent;color:#3a6080;font-size:0.44rem;padding:5px 7px;border-radius:3px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;font-weight:700}
+.nb.on,.nb:hover{color:#00d4ff;border-color:rgba(0,220,255,0.7);background:rgba(0,212,255,0.05)}
+main{max-width:1400px;margin:0 auto;padding:12px}
+.pg{display:none}
+.pg.on{display:block}
+.rh{background:linear-gradient(135deg,rgba(123,47,255,0.15),rgba(0,212,255,0.1),rgba(255,215,0,0.08));border:1px solid #ffd700;border-radius:8px;padding:16px;margin-bottom:16px;text-align:center;position:relative}
+.rhlbl{font-size:0.55rem;letter-spacing:4px;color:#ffd700;margin-bottom:6px;text-transform:uppercase}
+.rhn{font-size:clamp(2.5rem,10vw,5rem);font-weight:900;line-height:1;margin-bottom:4px}
+.rhs{font-size:0.68rem;color:#3a6080;letter-spacing:2px;margin-bottom:10px}
+.xw{background:rgba(0,0,0,0.5);border-radius:20px;height:10px;overflow:hidden;margin-bottom:5px}
+.xf{height:100%;background:linear-gradient(90deg,#7b2fff,#00d4ff,#ffd700);border-radius:20px;transition:width 1s ease}
+.xt{font-size:0.62rem;color:#ffd700}
+.erow{position:absolute;top:8px;right:8px;display:flex;gap:5px}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.sc{background:rgba(0,12,35,0.9);border:1px solid rgba(0,180,255,0.2);border-radius:6px;padding:10px;text-align:center;transition:all 0.2s;cursor:default}
+.sc:hover{border-color:rgba(0,220,255,0.7);transform:translateY(-2px)}
+.sci{font-size:1.2rem;margin-bottom:3px}
+.scl{font-size:0.4rem;letter-spacing:1.5px;color:#3a6080;text-transform:uppercase;margin-bottom:5px}
+.scv{font-size:1.2rem;font-weight:900}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px}
+.ht{font-size:0.68rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#00d4ff;text-shadow:0 0 8px #00d4ff;display:flex;align-items:center;gap:8px}
+.ht::before{content:'';display:inline-block;width:3px;height:14px;background:linear-gradient(180deg,#00d4ff,#7b2fff)}
+.card{background:rgba(0,12,35,0.9);border:1px solid rgba(0,180,255,0.2);border-radius:6px;padding:14px;margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;padding:7px 12px;border-radius:3px;font-weight:700;font-size:0.5rem;cursor:pointer;border:none;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.bp{background:rgba(0,136,255,0.15);border:1px solid rgba(0,220,255,0.7);color:#00d4ff}
+.bg2{background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:#00ff88}
+.bgo{background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);color:#ffd700}
+.br2{background:rgba(255,51,85,0.1);border:1px solid rgba(255,51,85,0.3);color:#ff3355}
+.bpu{background:rgba(123,47,255,0.1);border:1px solid rgba(123,47,255,0.3);color:#7b2fff}
+.bsm{padding:3px 7px;font-size:0.42rem}
+.pw{background:rgba(0,0,0,0.4);border-radius:10px;height:8px;overflow:hidden;margin:6px 0}
+.pf{height:100%;border-radius:10px;transition:width 0.8s ease}
+.sj{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.sjc{background:rgba(0,12,35,0.9);border:1px solid rgba(0,180,255,0.2);border-radius:6px;padding:14px;transition:all 0.3s;position:relative;overflow:hidden}
+.sjc:hover{border-color:rgba(0,220,255,0.7);transform:translateY(-2px)}
+.sjc::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px}
+.cm::before{background:linear-gradient(180deg,#00d4ff,#0088ff)}
+.ce::before{background:linear-gradient(180deg,#00ff88,#00aa55)}
+.cg::before{background:linear-gradient(180deg,#ffd700,#ff8800)}
+.cr::before{background:linear-gradient(180deg,#ff00ff,#aa00ff)}
+.tl{max-height:0;overflow:hidden;transition:max-height 0.4s ease;margin-top:8px}
+.tl.open{max-height:700px}
+.ti{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(0,60,120,0.3);cursor:pointer;font-size:0.72rem;transition:padding 0.2s}
+.ti:hover{padding-left:4px}
+.tc{width:14px;height:14px;border:1px solid rgba(0,180,255,0.3);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;flex-shrink:0}
+.tcd{background:#00ff88;border-color:#00ff88;color:#000}
+.ttd{text-decoration:line-through;color:#3a6080}
+.exb{width:100%;background:none;border:1px solid rgba(0,180,255,0.2);color:#3a6080;font-size:0.42rem;padding:5px;border-radius:3px;cursor:pointer;margin-top:8px;letter-spacing:2px;text-transform:uppercase}
+.exb:hover{border-color:#00d4ff;color:#00d4ff}
+.pg2{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.phc{background:rgba(0,12,35,0.9);border:1px solid rgba(0,180,255,0.2);border-radius:6px;padding:12px;text-align:center;transition:all 0.2s;cursor:default}
+.phc:hover{border-color:rgba(0,255,204,0.5);transform:translateY(-2px)}
+.phi{font-size:1.6rem;margin-bottom:5px}
+.phn{font-size:0.5rem;letter-spacing:2px;color:#00ffcc;margin-bottom:5px;text-transform:uppercase}
+.phv{font-size:1.3rem;font-weight:900;color:#00ffcc}
+.phu{font-size:0.58rem;color:#3a6080}
+.qi{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid rgba(0,180,255,0.2);border-radius:6px;margin-bottom:7px;cursor:pointer;transition:all 0.2s}
+.qi:hover{border-color:rgba(0,220,255,0.7)}
+.qid{border-color:rgba(0,255,136,0.3);background:rgba(0,255,136,0.03)}
+.qii{font-size:1.1rem;flex-shrink:0}
+.qiin{flex:1}
+.qin{font-size:0.58rem;font-weight:700;letter-spacing:1px;margin-bottom:2px}
+.qix{font-size:0.58rem;color:#ffd700}
+.qic{width:20px;height:20px;border:1px solid rgba(0,180,255,0.3);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0}
+.qicd{background:#00ff88;border-color:#00ff88;color:#000}
+.rcg{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.rcd{background:rgba(0,12,35,0.9);border:1px solid rgba(0,180,255,0.15);border-radius:6px;padding:12px;text-align:center;transition:all 0.2s}
+.rcdl{opacity:0.35}
+.rcdc{animation:rcp 2s ease infinite}
+@keyframes rcp{0%,100%{box-shadow:none}50%{box-shadow:0 0 20px rgba(255,215,0,0.3)}}
+.ov{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:500;background:rgba(0,0,0,0.88);align-items:center;justify-content:center}
+.ov.on{display:flex}
+.md{background:#010c20;border:1px solid rgba(0,220,255,0.7);border-radius:6px;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;padding:20px}
+.mdt{font-size:0.85rem;font-weight:900;letter-spacing:3px;color:#ffd700;text-shadow:0 0 10px #ffd700;margin-bottom:18px;text-transform:uppercase}
+.mdt::before{content:'&#9889; '}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f{display:flex;flex-direction:column;gap:4px}
+.fw{grid-column:1/-1}
+label{font-size:0.52rem;letter-spacing:2px;text-transform:uppercase;color:#3a6080}
+label::before{content:'// ';color:#00d4ff;opacity:0.5}
+input,select,textarea{background:rgba(0,12,35,0.9);border:1px solid rgba(0,180,255,0.2);color:#c8e8ff;font-size:0.8rem;padding:8px 10px;border-radius:3px;outline:none;width:100%;font-family:Arial,sans-serif}
+input:focus,select:focus,textarea:focus{border-color:#00d4ff}
+select option{background:#020810}
+textarea{resize:vertical;min-height:65px}
+input::placeholder{color:#3a6080}
+#toast{position:fixed;bottom:16px;right:16px;z-index:9998;background:#010c20;border:1px solid rgba(0,220,255,0.7);color:#00d4ff;padding:10px 16px;border-radius:4px;font-size:0.58rem;letter-spacing:2px;font-weight:700;text-transform:uppercase;opacity:0;transform:translateY(8px);transition:all 0.3s;pointer-events:none;max-width:260px;text-align:center}
+#toast.on{opacity:1;transform:translateY(0)}
+#toast.gold{border-color:#ffd700;color:#ffd700}
+#lvlup{position:fixed;top:0;left:0;width:100%;height:100%;z-index:8888;background:rgba(0,0,0,0.92);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;padding:20px}
+#lvlup.on{display:flex}
+.lvt{font-size:clamp(1.5rem,6vw,3rem);font-weight:900;color:#ffd700;text-shadow:0 0 50px #ffd700;letter-spacing:5px}
+.lvn{font-size:clamp(3.5rem,15vw,7rem);font-weight:900}
+.lvs{font-size:0.8rem;color:#00d4ff;letter-spacing:3px}
+.tbl{width:100%;border-collapse:collapse;font-size:0.72rem}
+.tbl th{background:rgba(0,8,25,0.95);padding:7px 10px;font-size:0.46rem;letter-spacing:2px;text-transform:uppercase;color:#3a6080;text-align:left;border-bottom:1px solid rgba(0,180,255,0.2)}
+.tbl td{padding:8px 10px;border-bottom:1px solid rgba(0,50,100,0.3);vertical-align:middle}
+.tbl tr:hover td{background:rgba(0,180,255,0.03)}
+.bdg{display:inline-block;padding:2px 7px;border-radius:2px;font-size:0.46rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.bwin{background:rgba(0,255,136,0.1);color:#00ff88;border:1px solid rgba(0,255,136,0.3)}
+.bloss{background:rgba(255,51,85,0.1);color:#ff3355;border:1px solid rgba(255,51,85,0.3)}
+.bbe{background:rgba(255,215,0,0.1);color:#ffd700;border:1px solid rgba(255,215,0,0.3)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,180,255,0.2);border-radius:2px}
+@media(max-width:600px){.sg{grid-template-columns:repeat(4,1fr)}.fg{grid-template-columns:1fr}main{padding:8px}}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="boot" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;cursor:pointer;padding:20px;text-align:center">
+  <div style="font-size:clamp(1.5rem,6vw,3rem);font-weight:900;color:#00d4ff;letter-spacing:5px;text-shadow:0 0 40px #00d4ff;line-height:1.3">NAMITANGSHU'S<br>SYSTEM</div>
+  <div style="font-size:0.72rem;color:#3a6080;letter-spacing:4px">THE ARCHITECT'S LIFE INTERFACE</div>
+  <div style="width:280px;height:3px;background:rgba(0,180,255,0.15);border-radius:3px;overflow:hidden"><div id="bar" style="height:100%;width:0%;background:linear-gradient(90deg,#7b2fff,#00d4ff,#ffd700);border-radius:3px"></div></div>
+  <div style="font-size:0.68rem;color:#00d4ff;text-align:left;width:280px;line-height:2.2">
+    <div id="l1" style="opacity:0;transition:opacity 0.4s">&#9655; Awakening Hunter Profile...</div>
+    <div id="l2" style="opacity:0;transition:opacity 0.4s">&#9655; Loading SSC Battle Plans...</div>
+    <div id="l3" style="opacity:0;transition:opacity 0.4s">&#9655; Syncing Physical Stats...</div>
+    <div id="l4" style="opacity:0;transition:opacity 0.4s">&#9655; Calibrating Market Intelligence...</div>
+    <div id="l5" style="opacity:0;transition:opacity 0.4s;color:#ffd700">&#9672; ARISE, NAMITANGSHU. YOUR SYSTEM AWAITS.</div>
+  </div>
+  <div style="font-size:0.6rem;color:#3a6080;letter-spacing:3px">[ TAP ANYWHERE TO ENTER ]</div>
+</div>
+
+<div id="app" style="display:none">
+  <header>
+    <div>
+      <div class="lt">NAMITANGSHU'S SYSTEM <span class="rb" id="hRank">F-RANK</span></div>
+      <div class="ls">THE ARCHITECT'S LIFE INTERFACE</div>
+    </div>
+    <nav>
+      <button class="nb on" onclick="go('status')">&#9650; Status</button>
+      <button class="nb" onclick="go('ssc')">&#128218; SSC</button>
+      <button class="nb" onclick="go('physical')">&#9876; Physical</button>
+      <button class="nb" onclick="go('trading')">&#128200; Trading</button>
+      <button class="nb" onclick="go('quests')">&#9889; Quests</button>
+      <button class="nb" onclick="go('ranks')">&#9733; Ranks</button>
+    </nav>
+  </header>
+  <main>
+
+    <div id="page-status" class="pg on">
+      <div class="rh">
+        <div class="erow">
+          <button class="btn bgo bsm" onclick="exportData()">&#11015; EXPORT</button>
+          <label class="btn bg2 bsm" style="cursor:pointer">&#11014; IMPORT
+            <input type="file" accept=".json" onchange="importData(event)" style="display:none"/>
+          </label>
+        </div>
+        <div class="rhlbl">CURRENT RANK</div>
+        <div class="rhn" id="rankName">F</div>
+        <div class="rhs" id="rankSub">RANK F &mdash; AWAKENING BEGINS</div>
+        <div class="xw"><div class="xf" id="xpBar" style="width:0%"></div></div>
+        <div class="xt" id="xpTxt">0 / 1000 XP to next rank</div>
+      </div>
+      <div class="sg" id="statsGrid"></div>
+      <div class="card">
+        <div class="sh">
+          <div class="ht">TODAY'S PERFORMANCE</div>
+          <button class="btn bgo" onclick="openMod('dailyM')">+ DAILY LOG</button>
+        </div>
+        <div id="todayGrid"></div>
+      </div>
+      <div class="card">
+        <div class="sh"><div class="ht">OVERALL MASTERY</div></div>
+        <div id="masteryGrid"></div>
+      </div>
+    </div>
+
+    <div id="page-ssc" class="pg">
+      <div class="sh">
+        <div class="ht">SSC CGL BATTLE PLAN</div>
+        <div style="font-size:0.68rem;color:#ffd700">+10 XP per topic</div>
+      </div>
+      <div class="sj" id="subjGrid"></div>
+    </div>
+
+    <div id="page-physical" class="pg">
+      <div class="sh">
+        <div class="ht">PHYSICAL MASTERY</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn bpu" onclick="openMod('physM')">+ LOG WORKOUT</button>
+          <button class="btn bgo" onclick="openMod('goalM')">+ SET GOAL</button>
+        </div>
+      </div>
+      <div class="pg2" id="physGrid"></div>
+      <div class="sh"><div class="ht">WORKOUT LOG</div></div>
+      <div class="card" style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th>Date</th><th>Exercise</th><th>Sets</th><th>Reps</th><th>Notes</th><th>XP</th><th></th></tr></thead>
+          <tbody id="wLog"></tbody>
+        </table>
+      </div>
+      <div class="sh" style="margin-top:12px"><div class="ht">PHYSICAL GOALS</div></div>
+      <div id="goalsList"></div>
+    </div>
+
+    <div id="page-trading" class="pg">
+      <div class="sh">
+        <div class="ht">MARKET BATTLE RECORDS</div>
+        <button class="btn bp" onclick="openMod('tradeM')">+ LOG TRADE</button>
+      </div>
+      <div id="tradeStats"></div>
+      <div class="card" style="overflow-x:auto"><div id="tradeLog"></div></div>
+    </div>
+
+    <div id="page-quests" class="pg">
+      <div class="sh">
+        <div class="ht">DAILY QUESTS</div>
+        <div style="font-size:0.68rem;color:#3a6080" id="qDate"></div>
+      </div>
+      <div id="questList"></div>
+      <div class="sh" style="margin-top:16px"><div class="ht">ADD CUSTOM QUEST</div></div>
+      <div class="card">
+        <div class="fg">
+          <div class="f"><label>Quest Name</label><input type="text" id="q_name" placeholder="e.g. Solve 50 math problems"/></div>
+          <div class="f"><label>XP Reward</label><input type="number" id="q_xp" value="50"/></div>
+          <div class="f"><label>Category</label>
+            <select id="q_cat">
+              <option value="study">Study</option>
+              <option value="physical">Physical</option>
+              <option value="trade">Trading</option>
+              <option value="mental">Mental</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="f" style="justify-content:flex-end;align-items:flex-end">
+            <button class="btn bgo" onclick="addQuest()" style="width:100%">+ ADD QUEST</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-ranks" class="pg">
+      <div class="sh"><div class="ht">RANK PROGRESSION</div></div>
+      <div class="rcg" id="rankCards"></div>
+      <div class="sh" style="margin-top:16px"><div class="ht">HOW TO EARN XP</div></div>
+      <div class="card"><div id="xpGuide"></div></div>
+      <div class="sh" style="margin-top:16px"><div class="ht">RANK HISTORY</div></div>
+      <div class="card"><div id="rankHist"></div></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODALS -->
+<div class="ov" id="dailyM">
+  <div class="md">
+    <div class="mdt">DAILY LOG</div>
+    <div class="fg">
+      <div class="f"><label>Hours Studied</label><input type="number" id="dl_hrs" placeholder="0" step="0.5" min="0"/></div>
+      <div class="f"><label>Mood</label>
+        <select id="dl_mood">
+          <option value="5">BEAST MODE</option><option value="4">Great</option>
+          <option value="3">Average</option><option value="2">Tired</option><option value="1">Burned out</option>
+        </select>
+      </div>
+      <div class="f fw"><label>Study Summary</label><textarea id="dl_study" placeholder="Topics covered..."></textarea></div>
+      <div class="f fw"><label>Key Lesson</label><textarea id="dl_lesson" placeholder="Any realisation or breakthrough?"></textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button class="btn br2" onclick="closeMod('dailyM')">CANCEL</button>
+      <button class="btn bgo" onclick="saveDL()">SAVE LOG</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="physM">
+  <div class="md">
+    <div class="mdt">LOG WORKOUT</div>
+    <div class="fg">
+      <div class="f"><label>Exercise</label>
+        <select id="p_ex">
+          <option>Push-ups</option><option>Pull-ups</option><option>Squats</option>
+          <option>Running</option><option>Cycling</option><option>Swimming</option>
+          <option>Plank</option><option>Sit-ups</option><option>Burpees</option>
+          <option>Jump Rope</option><option>Deadlift</option><option>Bench Press</option>
+          <option>Yoga</option><option>Walk</option><option>Custom</option>
+        </select>
+      </div>
+      <div class="f"><label>Custom Name</label><input type="text" id="p_custom" placeholder="If custom"/></div>
+      <div class="f"><label>Sets</label><input type="number" id="p_sets" placeholder="3" min="1"/></div>
+      <div class="f"><label>Reps / Duration</label><input type="text" id="p_reps" placeholder="15 or 30min"/></div>
+      <div class="f"><label>Weight (kg)</label><input type="number" id="p_weight" placeholder="0"/></div>
+      <div class="f"><label>How was it?</label>
+        <select id="p_feel">
+          <option value="5">Crushed it!</option><option value="4">Good</option>
+          <option value="3">Average</option><option value="2">Struggled</option>
+        </select>
+      </div>
+      <div class="f fw"><label>Notes</label><textarea id="p_notes" placeholder="How did it feel? Any PRs?"></textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button class="btn br2" onclick="closeMod('physM')">CANCEL</button>
+      <button class="btn bpu" onclick="saveWorkout()">SAVE WORKOUT</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="goalM">
+  <div class="md">
+    <div class="mdt">SET PHYSICAL GOAL</div>
+    <div class="fg">
+      <div class="f fw"><label>Goal Name</label><input type="text" id="g_name" placeholder="e.g. Run 5km"/></div>
+      <div class="f"><label>Target Value</label><input type="number" id="g_target" placeho

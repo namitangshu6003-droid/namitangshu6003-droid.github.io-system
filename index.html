@@ -3,22 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NAMITANGSHU'S LIFE SYSTEM</title>
+<title>NAMITANGSHU'S LIFE SYSTEM v5</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#010408;color:#c8e8ff;font-family:Arial,sans-serif;min-height:100vh}
 canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
-
-
-
-
-
-
-
-
-
-
-50%{opacity:1}}
 
 /* APP - hidden until boot finishes */
 #app{position:relative;z-index:2;min-height:100vh;background:#010408}
@@ -348,4 +337,581 @@ input::placeholder{color:#3a6080}
       <div class="f"><label>R:R</label><input type="text" id="tr_rr" placeholder="1:2"/></div>
       <div class="f"><label>Session</label>
         <select id="tr_ses">
-          <option>London</option><option>New York</opti
+          <option>London</option><option>New York</option><option>Asian</option><option>London/NY Overlap</option>
+        </select>
+      </div>
+      <div class="f"><label>Strategy</label><input type="text" id="tr_strat" placeholder="OB + Liq Sweep"/></div>
+      <div class="f fw"><label>Notes</label><textarea id="tr_note" placeholder="Setup, reasoning, lessons..."></textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button class="btn br2" onclick="closeMod('tradeM')">CANCEL</button>
+      <button class="btn bp" onclick="saveTrade()">SAVE TRADE</button>
+    </div>
+  </div>
+</div>
+
+<div id="lvlup">
+  <div class="lvt">RANK UP!</div>
+  <div class="lvs">YOU HAVE ASCENDED TO</div>
+  <div class="lvn" id="lvlNew">E</div>
+  <div class="lvs" id="lvlSub">THE JOURNEY CONTINUES</div>
+  <button class="btn bgo" onclick="closeMod('lvlup')" style="margin-top:16px;padding:12px 24px">CONTINUE</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var D = JSON.parse(localStorage.getItem('nls_v4') || 'null') || {
+  xp:0,totalXP:0,rank:'F',rankIdx:0,
+  INT:0,STR:0,END:0,DIS:0,MKT:0,AGI:0,VIT:0,WIS:0,
+  streak:0,lastLogin:'',questDate:'',
+  topics:{},trades:[],workouts:[],quests:[],goals:[],dailyLogs:[],
+  rankHistory:[],dTopics:0,dWorkouts:0,dTrades:0,dXP:0
+};
+function sv() { localStorage.setItem('nls_v4', JSON.stringify(D)); }
+
+var RANKS = [
+  {id:'F',sub:'AWAKENING BEGINS',xp:0,color:'#888888'},
+  {id:'E',sub:'THE JOURNEY BEGINS',xp:1000,color:'#00d4ff'},
+  {id:'D',sub:'GROWING STRONGER',xp:3000,color:'#00ff88'},
+  {id:'C',sub:'A FORCE TO RECKON',xp:7000,color:'#ffd700'},
+  {id:'B',sub:'ELITE HUNTER',xp:15000,color:'#ff8800'},
+  {id:'A',sub:'NATIONAL LEVEL',xp:30000,color:'#ff00ff'},
+  {id:'S',sub:'SHADOW MONARCH',xp:60000,color:'#7b2fff'},
+  {id:'SS',sub:'BEYOND ALL LIMITS',xp:120000,color:'#ff3355'},
+  {id:'SSS',sub:'THE ARCHITECT',xp:250000,color:'#ffd700'}
+];
+
+var STATS = [
+  {k:'INT',l:'Intelligence',i:'&#129504;',c:'#00d4ff'},
+  {k:'STR',l:'Strength',i:'&#128170;',c:'#00ffcc'},
+  {k:'END',l:'Endurance',i:'&#127939;',c:'#00ff88'},
+  {k:'DIS',l:'Discipline',i:'&#128293;',c:'#ff6b00'},
+  {k:'MKT',l:'Market Sense',i:'&#128200;',c:'#ffd700'},
+  {k:'AGI',l:'Agility',i:'&#9889;',c:'#ff00ff'},
+  {k:'VIT',l:'Vitality',i:'&#10084;',c:'#ff3355'},
+  {k:'WIS',l:'Wisdom',i:'&#127775;',c:'#7b2fff'}
+];
+
+var SUBJ = {
+  math:{n:'Quantitative Aptitude',c:'m',nc:'#00d4ff',bg:'linear-gradient(90deg,#00d4ff,#0088ff)',t:['Number System','HCF and LCM','Percentage','Ratio and Proportion','Average','Simple Interest','Compound Interest','Profit and Loss','Discount','Time and Work','Pipe and Cistern','Time Speed Distance','Boat and Stream','Sequence and Series','Algebra','Geometry','Mensuration 2D','Mensuration 3D','Trigonometry','Height and Distance','Data Interpretation','Statistics']},
+  eng:{n:'English Language',c:'e',nc:'#00ff88',bg:'linear-gradient(90deg,#00ff88,#00aa55)',t:['Reading Comprehension','Fill in the Blanks','Error Spotting','Sentence Correction','Synonyms','Antonyms','Idioms and Phrases','One Word Substitution','Active and Passive Voice','Direct and Indirect Speech','Cloze Test','Para Jumbles','Spelling Errors','Vocabulary','Tenses','Articles','Prepositions','Sentence Arrangement']},
+  gs:{n:'General Awareness',c:'g',nc:'#ffd700',bg:'linear-gradient(90deg,#ffd700,#ff8800)',t:['Ancient History','Medieval History','Modern History','Indian Geography','World Geography','Indian Polity','Indian Constitution','Indian Economy','Physics','Chemistry','Biology','Computer Knowledge','Current Affairs','Sports','Awards and Honours','Books and Authors','Important Days','International Organizations','Environment']},
+  reas:{n:'Reasoning',c:'r',nc:'#ff00ff',bg:'linear-gradient(90deg,#ff00ff,#aa00ff)',t:['Analogy','Classification','Number Series','Letter Series','Coding and Decoding','Blood Relations','Direction and Distance','Ranking','Seating Arrangement','Puzzle','Syllogism','Venn Diagram','Matrix','Word Formation','Statement and Conclusion','Arithmetic Reasoning','Missing Numbers','Mirror Image','Paper Folding','Non-Verbal Reasoning']}
+};
+
+var DEF_Q = [
+  {id:'q1',n:'Study for 2+ hours',xp:30,cat:'study',i:'&#128218;'},
+  {id:'q2',n:'Complete 3 SSC topics',xp:40,cat:'study',i:'&#9989;'},
+  {id:'q3',n:'Revise yesterday notes',xp:15,cat:'study',i:'&#128196;'},
+  {id:'q4',n:'Morning workout done',xp:25,cat:'physical',i:'&#9876;'},
+  {id:'q5',n:'Drink 8 glasses of water',xp:10,cat:'physical',i:'&#128167;'},
+  {id:'q6',n:'Log at least 1 trade',xp:20,cat:'trade',i:'&#128200;'},
+  {id:'q7',n:'Analyse 1 chart setup',xp:25,cat:'trade',i:'&#128202;'},
+  {id:'q8',n:'No junk food today',xp:15,cat:'physical',i:'&#129499;'},
+  {id:'q9',n:'Sleep before midnight',xp:15,cat:'physical',i:'&#128164;'},
+  {id:'q10',n:'Meditate 10 minutes',xp:20,cat:'mental',i:'&#129504;'},
+  {id:'q11',n:'No social media for 4hrs',xp:35,cat:'mental',i:'&#128262;'},
+  {id:'q12',n:'Write 3 goals for tomorrow',xp:15,cat:'mental',i:'&#9997;'}
+];
+
+var PHYS_S = [
+  {k:'pushups',l:'Push-ups PR',i:'&#128170;',u:'reps'},
+  {k:'pullups',l:'Pull-ups PR',i:'&#128170;',u:'reps'},
+  {k:'squats',l:'Squats PR',i:'&#127939;',u:'reps'},
+  {k:'run',l:'Best Run',i:'&#127939;',u:'km'},
+  {k:'plank',l:'Plank PR',i:'&#9876;',u:'sec'},
+  {k:'weight',l:'Body Weight',i:'&#9878;',u:'kg'},
+  {k:'total',l:'Total Workouts',i:'&#128293;',u:'sessions'},
+  {k:'streak',l:'Daily Streak',i:'&#127942;',u:'days'}
+];
+
+// PARTICLES
+(function() {
+  var c = document.getElementById('cv');
+  var x = c.getContext('2d');
+  var W, H, P = [];
+  function rsz() { W = c.width = innerWidth; H = c.height = innerHeight; }
+  rsz();
+  window.addEventListener('resize', rsz);
+  function mk() {
+    return {
+      x: Math.random()*W, y: Math.random()*H,
+      vx: (Math.random()-0.5)*0.25, vy: (Math.random()-0.5)*0.25,
+      r: Math.random()*1.5+0.4, l: Math.random(), ml: Math.random()*0.5+0.2,
+      cl: ['0,212,255','123,47,255','255,215,0','0,255,136'][Math.floor(Math.random()*4)]
+    };
+  }
+  for (var i = 0; i < 80; i++) P.push(mk());
+  function draw() {
+    x.clearRect(0, 0, W, H);
+    for (var i = 0; i < P.length; i++) {
+      for (var j = i+1; j < P.length; j++) {
+        var dx = P[i].x-P[j].x, dy = P[i].y-P[j].y, d = Math.sqrt(dx*dx+dy*dy);
+        if (d < 100) {
+          x.beginPath(); x.moveTo(P[i].x, P[i].y); x.lineTo(P[j].x, P[j].y);
+          x.strokeStyle = 'rgba(0,180,255,' + (1-d/100)*0.06 + ')';
+          x.lineWidth = 0.5; x.stroke();
+        }
+      }
+    }
+    P.forEach(function(p) {
+      p.x += p.vx; p.y += p.vy; p.l += 0.003;
+      if (p.l > p.ml || p.x < 0 || p.x > W || p.y < 0 || p.y > H) {
+        var n = mk(); p.x = n.x; p.y = n.y; p.vx = n.vx; p.vy = n.vy; p.l = 0; p.ml = n.ml;
+      }
+      var a = p.l/p.ml < 0.5 ? p.l/p.ml*2 : 2-p.l/p.ml*2;
+      x.beginPath(); x.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      x.fillStyle = 'rgba(' + p.cl + ',' + a*0.5 + ')'; x.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+window.onload = function() { initApp(); };
+
+function initApp() {
+  var today = new Date().toDateString();
+  var yesterday = new Date(Date.now()-86400000).toDateString();
+  if (D.lastLogin !== today) {
+    D.streak = D.lastLogin === yesterday ? D.streak+1 : 1;
+    D.lastLogin = today; D.dTopics = 0; D.dWorkouts = 0; D.dTrades = 0; D.dXP = 0;
+    addXP(15, 'Daily login', false); sv();
+  }
+  if (!D.quests.length) {
+    D.quests = DEF_Q.map(function(q) {
+      return {id:q.id, n:q.n, xp:q.xp, cat:q.cat, i:q.i, done:false, custom:false};
+    });
+    sv();
+  }
+  if (D.questDate !== today) {
+    D.questDate = today;
+    D.quests.forEach(function(q) { if (!q.custom) q.done = false; });
+    sv();
+  }
+  document.getElementById('qDate').textContent = new Date().toDateString();
+  renderAll();
+}
+
+function renderAll() { renderStatus(); renderSSC(); renderPhysical(); renderTrading(); renderQuests(); renderRanks(); }
+
+function go(id) {
+  document.querySelectorAll('.pg').forEach(function(p) { p.classList.remove('on'); });
+  document.querySelectorAll('.nb').forEach(function(b) { b.classList.remove('on'); });
+  document.getElementById('page-' + id).classList.add('on');
+  document.querySelectorAll('.nb').forEach(function(b) {
+    var oc = b.getAttribute('onclick');
+    if (oc && oc.indexOf("'" + id + "'") > -1) b.classList.add('on');
+  });
+}
+
+function openMod(id) { document.getElementById(id).classList.add('on'); }
+function closeMod(id) { document.getElementById(id).classList.remove('on'); }
+
+function addXP(amt, reason, show) {
+  D.xp += amt; D.totalXP += amt; D.dXP += amt;
+  if (reason.indexOf('topic') > -1) D.INT = Math.min(999, D.INT+1);
+  if (reason.indexOf('rkout') > -1) { D.STR = Math.min(999, D.STR+2); D.END = Math.min(999, D.END+1); }
+  if (reason.indexOf('rade') > -1) D.MKT = Math.min(999, D.MKT+1);
+  if (reason.indexOf('uest') > -1 || reason.indexOf('login') > -1 || reason.indexOf('Daily') > -1) D.DIS = Math.min(999, D.DIS+1);
+  D.AGI = Math.min(999, Math.floor((D.STR+D.END)/2));
+  D.VIT = Math.min(999, Math.floor((D.END+D.DIS)/2));
+  D.WIS = Math.min(999, Math.floor((D.INT+D.MKT+D.DIS)/3));
+  checkRank(); sv();
+  if (show !== false) showToast('+' + amt + ' XP', false);
+}
+
+function checkRank() {
+  while (D.rankIdx < RANKS.length-1 && D.totalXP >= RANKS[D.rankIdx+1].xp) {
+    D.rankIdx++; D.rank = RANKS[D.rankIdx].id;
+    D.rankHistory.push({rank:D.rank, sub:RANKS[D.rankIdx].sub, date:new Date().toLocaleDateString(), xp:D.totalXP});
+    showLvlUp(RANKS[D.rankIdx]);
+  }
+}
+
+function showLvlUp(r) {
+  var n = document.getElementById('lvlNew');
+  n.textContent = r.id; n.style.color = r.color; n.style.textShadow = '0 0 80px ' + r.color;
+  document.getElementById('lvlSub').textContent = r.sub;
+  document.getElementById('lvlup').classList.add('on');
+  setTimeout(function() { document.getElementById('lvlup').classList.remove('on'); }, 6000);
+}
+
+function renderStatus() {
+  var ri = RANKS[D.rankIdx];
+  var rn = RANKS[Math.min(D.rankIdx+1, RANKS.length-1)];
+  var pct = D.rankIdx >= RANKS.length-1 ? 100 : Math.min(100, ((D.totalXP-ri.xp)/(rn.xp-ri.xp))*100);
+  var rEl = document.getElementById('rankName');
+  rEl.textContent = ri.id; rEl.style.color = ri.color; rEl.style.textShadow = '0 0 30px ' + ri.color;
+  document.getElementById('rankSub').textContent = ri.sub;
+  document.getElementById('xpBar').style.width = pct + '%';
+  document.getElementById('xpTxt').textContent = (D.totalXP-ri.xp) + ' / ' + (D.rankIdx >= RANKS.length-1 ? 'MAX' : rn.xp-ri.xp) + ' XP to next rank';
+  document.getElementById('hRank').textContent = ri.id + '-RANK';
+
+  var sg = '';
+  STATS.forEach(function(s) {
+    sg += '<div class="sc">';
+    sg += '<div class="sci">' + s.i + '</div>';
+    sg += '<div class="scl">' + s.l + '</div>';
+    sg += '<div class="scv" style="color:' + s.c + '">' + D[s.k] + '</div>';
+    sg += '</div>';
+  });
+  document.getElementById('statsGrid').innerHTML = sg;
+
+  var tColors = ['#00d4ff','#00ffcc','#00ff88','#ffd700','#ff3355'];
+  var tLabels = ['TOPICS DONE','WORKOUTS','TRADES','XP TODAY','STREAK'];
+  var tVals = [D.dTopics, D.dWorkouts, D.dTrades, '+'+D.dXP, D.streak+'&#128293;'];
+  var tg = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px">';
+  for (var i = 0; i < tLabels.length; i++) {
+    tg += '<div style="text-align:center;padding:10px;background:rgba(0,0,0,0.3);border-radius:4px;border:1px solid rgba(0,180,255,0.2)">';
+    tg += '<div style="font-size:0.52rem;color:#3a6080;margin-bottom:3px">' + tLabels[i] + '</div>';
+    tg += '<div style="font-size:1.3rem;font-weight:900;color:' + tColors[i] + '">' + tVals[i] + '</div>';
+    tg += '</div>';
+  }
+  document.getElementById('todayGrid').innerHTML = tg + '</div>';
+
+  var tot = 0, done = 0;
+  Object.keys(SUBJ).forEach(function(k) {
+    var s = SUBJ[k]; tot += s.t.length;
+    s.t.forEach(function(t) { if (D.topics[k+'_'+t]) done++; });
+  });
+  var sp = tot > 0 ? Math.round((done/tot)*100) : 0;
+  var wins = D.trades.filter(function(t) { return t.out === 'Win'; }).length;
+  var wr = D.trades.length > 0 ? Math.round((wins/D.trades.length)*100) : 0;
+  var wp = Math.min(100, Math.round((D.workouts.length/50)*100));
+  var txp = Math.min(100, (D.totalXP/250000)*100);
+  var mItems = [
+    {l:'SSC CGL SYLLABUS', pct:sp, bg:'linear-gradient(90deg,#7b2fff,#00d4ff)', c:'#00d4ff', txt:sp+'% ('+done+'/'+tot+')'},
+    {l:'PHYSICAL FITNESS', pct:wp, bg:'linear-gradient(90deg,#00ffcc,#00aa88)', c:'#00ffcc', txt:D.workouts.length+' workouts done'},
+    {l:'TRADING WIN RATE', pct:wr, bg:'linear-gradient(90deg,#00ff88,#00aa55)', c:'#00ff88', txt:wr+'% ('+D.trades.length+' trades)'},
+    {l:'TOTAL XP JOURNEY', pct:txp, bg:'linear-gradient(90deg,#ffd700,#ff6b00)', c:'#ffd700', txt:D.totalXP.toLocaleString()+' XP Total'}
+  ];
+  var mg = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">';
+  mItems.forEach(function(it) {
+    mg += '<div>';
+    mg += '<div style="font-size:0.58rem;color:#3a6080;margin-bottom:4px">' + it.l + '</div>';
+    mg += '<div class="pw"><div class="pf" style="width:' + it.pct + '%;background:' + it.bg + '"></div></div>';
+    mg += '<div style="font-size:0.62rem;color:' + it.c + '">' + it.txt + '</div>';
+    mg += '</div>';
+  });
+  document.getElementById('masteryGrid').innerHTML = mg + '</div>';
+}
+
+function renderSSC() {
+  var html = '';
+  Object.keys(SUBJ).forEach(function(k) {
+    var s = SUBJ[k];
+    var tot = s.t.length;
+    var done = s.t.filter(function(t) { return D.topics[k+'_'+t]; }).length;
+    var pct = Math.round((done/tot)*100);
+    var topics = '';
+    s.t.forEach(function(t) {
+      var key = k+'_'+t;
+      var d = D.topics[key];
+      topics += '<div class="ti" onclick="toggleTopic(\'' + k + '\',\'' + t.replace(/'/g, "\\'") + '\')">';
+      topics += '<div class="tc' + (d ? ' tcd' : '') + '">' + (d ? '&#10003;' : '') + '</div>';
+      topics += '<div class="' + (d ? 'ttd' : '') + '">' + t + '</div>';
+      topics += '<div style="font-size:0.5rem;color:#ffd700;margin-left:auto">+10 XP</div>';
+      topics += '</div>';
+    });
+    html += '<div class="sjc c' + s.c + '">';
+    html += '<div style="font-size:0.75rem;font-weight:800;color:' + s.nc + ';margin-bottom:3px">' + s.n + '</div>';
+    html += '<div style="font-size:0.62rem;color:#3a6080">' + done + '/' + tot + ' mastered</div>';
+    html += '<div class="pw"><div class="pf" style="width:' + pct + '%;background:' + s.bg + '"></div></div>';
+    html += '<div style="font-size:0.62rem;color:#3a6080;margin-bottom:6px">' + pct + '% Complete</div>';
+    html += '<button class="exb" onclick="toggleT(\'' + k + '\')">VIEW / HIDE TOPICS</button>';
+    html += '<div class="tl" id="tl_' + k + '">' + topics + '</div>';
+    html += '</div>';
+  });
+  document.getElementById('subjGrid').innerHTML = html;
+}
+
+function toggleT(k) { document.getElementById('tl_' + k).classList.toggle('open'); }
+
+function toggleTopic(k, t) {
+  var key = k+'_'+t;
+  if (D.topics[key]) { D.topics[key] = false; D.INT = Math.max(0, D.INT-1); sv(); renderSSC(); renderStatus(); }
+  else { D.topics[key] = true; D.dTopics++; addXP(10, 'SSC topic completed'); sv(); renderSSC(); renderStatus(); }
+}
+
+function renderPhysical() {
+  var best = {pushups:0, pullups:0, squats:0, run:0, plank:0};
+  D.workouts.forEach(function(w) {
+    var v = parseFloat(w.reps) || 0;
+    if (w.ex === 'Push-ups' && v > best.pushups) best.pushups = v;
+    if (w.ex === 'Pull-ups' && v > best.pullups) best.pullups = v;
+    if (w.ex === 'Squats' && v > best.squats) best.squats = v;
+    if (w.ex === 'Running') best.run = Math.max(best.run, v);
+    if (w.ex === 'Plank') best.plank = Math.max(best.plank, v);
+  });
+  var vals = {pushups:best.pushups, pullups:best.pullups, squats:best.squats, run:best.run, plank:best.plank, weight:D.bodyWeight||0, total:D.workouts.length, streak:D.streak};
+  var pg = '';
+  PHYS_S.forEach(function(s) {
+    pg += '<div class="phc">';
+    pg += '<div class="phi">' + s.i + '</div>';
+    pg += '<div class="phn">' + s.l + '</div>';
+    pg += '<div class="phv">' + (vals[s.k]||0) + '</div>';
+    pg += '<div class="phu">' + s.u + '</div>';
+    pg += '</div>';
+  });
+  document.getElementById('physGrid').innerHTML = pg;
+
+  var wl = '';
+  if (!D.workouts.length) {
+    wl = '<tr><td colspan="7" style="text-align:center;color:#3a6080;padding:20px">NO WORKOUTS LOGGED YET</td></tr>';
+  } else {
+    D.workouts.slice(0, 20).forEach(function(w, i) {
+      wl += '<tr>';
+      wl += '<td style="color:#3a6080">' + w.date + '</td>';
+      wl += '<td style="color:#00ffcc;font-weight:700">' + w.ex + '</td>';
+      wl += '<td>' + (w.sets||'-') + '</td>';
+      wl += '<td>' + (w.reps||'-') + '</td>';
+      wl += '<td style="color:#3a6080;font-size:0.65rem">' + (w.notes||'-') + '</td>';
+      wl += '<td style="color:#ffd700">+20</td>';
+      wl += '<td><button class="btn br2 bsm" onclick="delWorkout(' + i + ')">DEL</button></td>';
+      wl += '</tr>';
+    });
+  }
+  document.getElementById('wLog').innerHTML = wl;
+
+  var gl = '';
+  if (!D.goals || !D.goals.length) {
+    gl = '<div class="card" style="text-align:center;color:#3a6080;font-size:0.75rem;padding:20px">NO GOALS SET YET</div>';
+  } else {
+    D.goals.forEach(function(g, i) {
+      gl += '<div class="card" style="display:flex;align-items:center;gap:12px">';
+      gl += '<div style="flex:1">';
+      gl += '<div style="font-size:0.65rem;font-weight:700;color:#ffd700;margin-bottom:4px">' + g.n + '</div>';
+      gl += '<div style="font-size:0.62rem;color:#3a6080">Target: ' + g.target + ' ' + g.unit + (g.deadline ? ' - Deadline: ' + g.deadline : '') + '</div>';
+      gl += '</div>';
+      gl += '<button class="btn br2 bsm" onclick="delGoal(' + i + ')">DEL</button>';
+      gl += '</div>';
+    });
+  }
+  document.getElementById('goalsList').innerHTML = gl;
+}
+
+function saveWorkout() {
+  var ex = document.getElementById('p_ex').value;
+  if (ex === 'Custom') ex = document.getElementById('p_custom').value.trim();
+  if (!ex) { alert('Enter exercise.'); return; }
+  D.workouts.unshift({ex:ex, sets:document.getElementById('p_sets').value, reps:document.getElementById('p_reps').value, weight:document.getElementById('p_weight').value, notes:document.getElementById('p_notes').value, date:new Date().toLocaleDateString()});
+  D.dWorkouts++; D.STR = Math.min(999, D.STR+2); D.END = Math.min(999, D.END+1);
+  addXP(20, 'Workout logged'); sv();
+  closeMod('physM');
+  ['p_custom','p_sets','p_reps','p_weight','p_notes'].forEach(function(id) { document.getElementById(id).value = ''; });
+  renderPhysical(); renderStatus();
+}
+
+function delWorkout(i) { if (!confirm('Delete?')) return; D.workouts.splice(i, 1); sv(); renderPhysical(); }
+
+function saveGoal() {
+  var n = document.getElementById('g_name').value.trim();
+  if (!n) { alert('Enter goal name.'); return; }
+  if (!D.goals) D.goals = [];
+  D.goals.push({n:n, target:document.getElementById('g_target').value, unit:document.getElementById('g_unit').value, deadline:document.getElementById('g_deadline').value});
+  sv(); closeMod('goalM');
+  ['g_name','g_target','g_unit','g_deadline'].forEach(function(id) { document.getElementById(id).value = ''; });
+  renderPhysical(); showToast('Goal set!', false);
+}
+
+function delGoal(i) { if (!confirm('Delete?')) return; D.goals.splice(i, 1); sv(); renderPhysical(); }
+
+function saveTrade() {
+  var pair = document.getElementById('tr_pair').value.trim();
+  if (!pair) { alert('Enter a pair.'); return; }
+  var out = document.getElementById('tr_out').value;
+  var pl = parseFloat(document.getElementById('tr_pl').value) || 0;
+  D.trades.unshift({
+    id: Date.now().toString(), pair:pair, out:out, pl:pl,
+    rr: document.getElementById('tr_rr').value,
+    ses: document.getElementById('tr_ses').value,
+    strat: document.getElementById('tr_strat').value,
+    note: document.getElementById('tr_note').value,
+    date: new Date().toLocaleDateString()
+  });
+  D.dTrades++;
+  addXP(out === 'Win' ? 25 : 5, out === 'Win' ? 'Winning trade' : 'Trade logged');
+  if (out === 'Win') D.MKT = Math.min(999, D.MKT+2);
+  sv(); closeMod('tradeM');
+  ['tr_pair','tr_pl','tr_rr','tr_strat','tr_note'].forEach(function(id) { document.getElementById(id).value = ''; });
+  renderTrading(); renderStatus();
+}
+
+function renderTrading() {
+  var wins = D.trades.filter(function(t) { return t.out === 'Win'; }).length;
+  var losses = D.trades.filter(function(t) { return t.out === 'Loss'; }).length;
+  var wr = D.trades.length > 0 ? Math.round((wins/D.trades.length)*100) : 0;
+  var pnl = D.trades.reduce(function(s, t) { return s + (parseFloat(t.pl)||0); }, 0);
+  var wPnl = wins > 0 ? D.trades.filter(function(t) { return t.out==='Win'; }).reduce(function(s,t) { return s+(parseFloat(t.pl)||0); }, 0)/wins : 0;
+  var lPnl = losses > 0 ? Math.abs(D.trades.filter(function(t) { return t.out==='Loss'; }).reduce(function(s,t) { return s+(parseFloat(t.pl)||0); }, 0)/losses) : 0;
+  var cur = 0, best = 0;
+  D.trades.slice().reverse().forEach(function(t) { if (t.out==='Win') { cur++; if(cur>best) best=cur; } else cur=0; });
+
+  var tsData = [
+    {l:'TOTAL TRADES', v:D.trades.length, c:'#00d4ff'},
+    {l:'WIN RATE', v:wr+'%', c:wr>=50?'#00ff88':'#ff3355'},
+    {l:'NET P&L', v:(pnl>=0?'+':'')+'$'+pnl.toFixed(2), c:pnl>=0?'#00ff88':'#ff3355'},
+    {l:'BEST STREAK', v:best, c:'#ffd700'},
+    {l:'AVG WIN', v:'+$'+wPnl.toFixed(2), c:'#00ff88'},
+    {l:'AVG LOSS', v:'-$'+lPnl.toFixed(2), c:'#ff3355'}
+  ];
+  var tsh = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px">';
+  tsData.forEach(function(t) {
+    tsh += '<div class="card" style="text-align:center;padding:12px">';
+    tsh += '<div style="font-size:0.52rem;color:#3a6080;margin-bottom:3px">' + t.l + '</div>';
+    tsh += '<div style="font-size:1.4rem;font-weight:900;color:' + t.c + '">' + t.v + '</div>';
+    tsh += '</div>';
+  });
+  document.getElementById('tradeStats').innerHTML = tsh + '</div>';
+
+  var log = document.getElementById('tradeLog');
+  if (!D.trades.length) {
+    log.innerHTML = '<div style="text-align:center;color:#3a6080;padding:25px;font-size:0.75rem">NO TRADES LOGGED YET</div>';
+    return;
+  }
+  var lh = '<table class="tbl"><thead><tr><th>Date</th><th>Pair</th><th>Result</th><th>P&L</th><th>R:R</th><th>Strategy</th><th>Session</th><th></th></tr></thead><tbody>';
+  D.trades.forEach(function(t) {
+    var p = parseFloat(t.pl||0);
+    var oc = t.out==='Breakeven' ? 'bbe' : t.out==='Win' ? 'bwin' : 'bloss';
+    var pc = p >= 0 ? '#00ff88' : '#ff3355';
+    lh += '<tr>';
+    lh += '<td style="color:#3a6080">' + t.date + '</td>';
+    lh += '<td style="color:#00d4ff;font-weight:700">' + t.pair + '</td>';
+    lh += '<td><span class="bdg ' + oc + '">' + t.out + '</span></td>';
+    lh += '<td style="color:' + pc + ';font-weight:700">' + (p>=0?'+':'') + '$' + p.toFixed(2) + '</td>';
+    lh += '<td>' + (t.rr||'-') + '</td>';
+    lh += '<td style="color:#3a6080;font-size:0.65rem">' + (t.strat||'-') + '</td>';
+    lh += '<td style="color:#3a6080;font-size:0.65rem">' + (t.ses||'-') + '</td>';
+    lh += '<td><button class="btn br2 bsm" onclick="delTrade(\'' + t.id + '\')">DEL</button></td>';
+    lh += '</tr>';
+  });
+  log.innerHTML = lh + '</tbody></table>';
+}
+
+function delTrade(id) {
+  if (!confirm('Delete?')) return;
+  D.trades = D.trades.filter(function(t) { return t.id !== id; });
+  sv(); renderTrading(); renderStatus();
+}
+
+function renderQuests() {
+  var icons = {study:'&#128218;', physical:'&#9876;', trade:'&#128200;', mental:'&#129504;', other:'&#9889;'};
+  var html = '';
+  D.quests.forEach(function(q, i) {
+    var ic = q.i || icons[q.cat] || '&#9889;';
+    html += '<div class="qi' + (q.done ? ' qid' : '') + '" onclick="toggleQ(' + i + ')">';
+    html += '<div class="qii">' + ic + '</div>';
+    html += '<div class="qiin">';
+    html += '<div class="qin" style="color:' + (q.done ? '#3a6080' : '#c8e8ff') + '">' + q.n + '</div>';
+    html += '<div class="qix">+' + q.xp + ' XP</div>';
+    html += '</div>';
+    html += '<div class="qic' + (q.done ? ' qicd' : '') + '">' + (q.done ? '&#10003;' : '') + '</div>';
+    html += '</div>';
+  });
+  document.getElementById('questList').innerHTML = html;
+}
+
+function toggleQ(i) {
+  var q = D.quests[i];
+  if (q.done) { q.done = false; sv(); renderQuests(); }
+  else {
+    q.done = true; addXP(q.xp, 'Quest completed'); D.DIS = Math.min(999, D.DIS+1); sv(); renderQuests(); renderStatus();
+    if (D.quests.filter(function(x) { return !x.done; }).length === 0) {
+      addXP(50, 'All quests done!'); showToast('ALL QUESTS DONE! +50 BONUS XP!', true);
+    }
+  }
+}
+
+function addQuest() {
+  var n = document.getElementById('q_name').value.trim();
+  if (!n) { alert('Enter quest name.'); return; }
+  var icons = {study:'&#128218;', physical:'&#9876;', trade:'&#128200;', mental:'&#129504;', other:'&#9889;'};
+  var cat = document.getElementById('q_cat').value;
+  D.quests.push({id:Date.now().toString(), n:n, xp:parseInt(document.getElementById('q_xp').value)||50, cat:cat, i:icons[cat], done:false, custom:true});
+  sv(); renderQuests(); document.getElementById('q_name').value = ''; showToast('Quest added!', false);
+}
+
+function renderRanks() {
+  var html = '';
+  RANKS.forEach(function(r) {
+    var u = D.totalXP >= r.xp;
+    var ic = D.rank === r.id;
+    html += '<div class="rcd ' + (u ? '' : 'rcdl') + (ic ? ' rcdc' : '') + '" style="border-color:' + (ic ? r.color : 'rgba(0,180,255,0.15)') + '">';
+    html += '<div style="font-size:1.5rem;font-weight:900;color:' + r.color + ';text-shadow:0 0 12px ' + r.color + ';line-height:1;margin-bottom:4px">' + r.id + '</div>';
+    html += '<div style="font-size:0.48rem;letter-spacing:2px;color:' + r.color + ';margin-bottom:3px">' + r.id + '-RANK</div>';
+    html += '<div style="font-size:0.6rem;color:#3a6080;margin-bottom:4px">' + r.sub + '</div>';
+    html += '<div style="font-size:0.58rem;color:#3a6080">' + (r.id==='F' ? 'Start' : r.xp.toLocaleString() + ' XP') + '</div>';
+    if (ic) html += '<div style="color:' + r.color + ';font-size:0.45rem;margin-top:4px;letter-spacing:2px">CURRENT</div>';
+    if (u && !ic) html += '<div style="color:#00ff88;font-size:0.55rem;margin-top:4px">ACHIEVED</div>';
+    html += '</div>';
+  });
+  document.getElementById('rankCards').innerHTML = html;
+
+  var guide = ['Complete SSC topic = +10 XP','Log workout = +20 XP','Winning trade = +25 XP','Log any trade = +5 XP','Complete quest = +varies','Daily streak = +15 XP','All quests done = +50 XP','Daily log entry = +10 XP'];
+  var gh = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;font-size:0.7rem">';
+  guide.forEach(function(g) { gh += '<div style="padding:9px;border:1px solid rgba(0,180,255,0.2);border-radius:4px">' + g + '</div>'; });
+  document.getElementById('xpGuide').innerHTML = gh + '</div>';
+
+  var rh = '';
+  if (!D.rankHistory.length) {
+    rh = '<div style="text-align:center;color:#3a6080;font-size:0.75rem;padding:20px">RANK UP TO SEE HISTORY</div>';
+  } else {
+    D.rankHistory.slice().reverse().forEach(function(r) {
+      var rd = RANKS.filter(function(x) { return x.id === r.rank; })[0] || RANKS[0];
+      rh += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(0,50,100,0.3);font-size:0.72rem">';
+      rh += '<div style="font-weight:900;font-size:0.85rem;min-width:40px;color:' + rd.color + '">' + r.rank + '</div>';
+      rh += '<div>' + r.sub + '</div>';
+      rh += '<div style="margin-left:auto;color:#3a6080">' + r.date + '</div>';
+      rh += '<div style="color:#ffd700;min-width:80px;text-align:right">' + r.xp.toLocaleString() + ' XP</div>';
+      rh += '</div>';
+    });
+  }
+  document.getElementById('rankHist').innerHTML = rh;
+}
+
+function saveDL() {
+  var hrs = parseFloat(document.getElementById('dl_hrs').value) || 0;
+  var mood = parseInt(document.getElementById('dl_mood').value) || 3;
+  var xpG = Math.round(hrs*8) + mood*4 + 10;
+  D.dailyLogs.push({date:new Date().toDateString(), hrs:hrs, mood:mood, study:document.getElementById('dl_study').value, lesson:document.getElementById('dl_lesson').value, xp:xpG});
+  addXP(xpG, 'Daily log submitted'); sv();
+  closeMod('dailyM');
+  ['dl_study','dl_lesson'].forEach(function(id) { document.getElementById(id).value = ''; });
+  document.getElementById('dl_hrs').value = '';
+  renderStatus();
+}
+
+function exportData() {
+  var blob = new Blob([JSON.stringify(D, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'namitangshu-life-backup.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('DATA EXPORTED!', false);
+}
+
+function importData(event) {
+  var file = event.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try { D = JSON.parse(e.target.result); sv(); renderAll(); showToast('DATA IMPORTED!', false); }
+    catch(err) { alert('Invalid backup file.'); }
+  };
+  reader.readAsText(file); event.target.value = '';
+}
+
+function showToast(m, gold) {
+  var t = document.getElementById('toast');
+  t.innerHTML = m; t.className = 'on' + (gold ? ' gold' : '');
+  setTimeout(function() { t.className = ''; }, 2800);
+}
+
+document.querySelectorAll('.ov').forEach(function(o) {
+  o.addEventListener('click', function(e) { if (e.target === o) o.classList.remove('on'); });
+});
+</script>
+</body>
+</html>
